@@ -43,5 +43,7 @@ main {
 }
 
 #tv-chart {
-  height: 500px;
+  width: 100%;
+  height: 400px;   /* fixed height so chart can render */
+  min-height: 300px;
 }
