@@ -54,9 +54,27 @@
     <button class="logout" onclick="logout()">Logout</button>
   </header>
 
-  <main>
-    <div id="tv-chart"></div>
-  </main>
+ <main>
+  <div id="tv-chart"></div>
+
+  <section class="trade-box">
+    <h2>Trade BTC/USDT</h2>
+    <p>Balance: <span id="balance-display"></span></p>
+    <input type="number" id="trade-amount" placeholder="Amount (USDT)">
+    <button onclick="placeTrade('buy')">Buy</button>
+    <button onclick="placeTrade('sell')">Sell</button>
+  </section>
+
+  <section class="open-trades">
+    <h2>Open Trades</h2>
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Amount</th><th>Entry</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="trades-list"></tbody>
+    </table>
+  </section>
+</main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
