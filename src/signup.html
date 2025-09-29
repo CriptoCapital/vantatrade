@@ -1,42 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VantaTrade - Signup</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="auth-container">
     <h2>Create Account</h2>
+    <input type="text" id="signup-username" placeholder="Username" required>
+    <select id="signup-currency">
+      <option value="USD">USD</option>
+      <option value="EUR">EUR</option>
+      <option value="GBP">GBP</option>
+      <option value="NGN">ARS</option>
+    </select>
     <input type="email" id="signup-email" placeholder="Email" required>
     <input type="password" id="signup-password" placeholder="Password" required>
     <button onclick="signup()">Sign Up</button>
     <p>Already have an account? <a href="login.html">Login</a></p>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = "https://kmjgyqqbqcxwpavwgnsu.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttamd5cXFicWN4d3BhdndnbnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTIzNjMsImV4cCI6MjA3NDcyODM2M30.uHWMB_DeQn4nQ-MWcwEKVhnskA_K1AlGoAacmxVu3b0";
 
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://kmjgyqqbqcxwpavwgnsu.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttamd5cXFicWN4d3BhdndnbnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTIzNjMsImV4cCI6MjA3NDcyODM2M30.uHWMB_DeQn4nQ-MWcwEKVhnskA_K1AlGoAacmxVu3b0";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function signup() {
-    const email = document.getElementById("signup-email").value;
-    const password = document.getElementById("signup-password").value;
+    async function signup() {
+      const username = document.getElementById("signup-username").value.trim();
+      const currency = document.getElementById("signup-currency").value;
+      const email = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value;
 
-    const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password,
-    });
+      // Step 1: Create user in Auth
+      const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+        email,
+        password
+      });
 
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("Signup successful! Check your email.");
-      window.location.href = "index.html";
+      if (authError) {
+        alert("Error: " + authError.message);
+        return;
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        alert("Signup failed: No user ID returned.");
+        return;
+      }
+
+      // Step 2: Insert profile row
+      const { error: profileError } = await supabaseClient
+        .from("profiles")
+        .insert([{ 
+          id: userId, 
+          username: username, 
+          currency: currency,
+          balance: 10000 
+        }]);
+
+      if (profileError) {
+        alert("Profile error: " + profileError.message);
+      } else {
+        alert("Signup successful! Check your email to confirm.");
+        window.location.href = "index.html";
+      }
     }
-  }
-</script>
+  </script>
 </body>
 </html>
