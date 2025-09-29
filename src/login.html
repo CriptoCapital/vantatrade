@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VantaTrade - Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email" required>
+    <input type="password" id="login-password" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p>Don’t have an account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = supabase.createClient(
+      "https://YOUR_PROJECT.supabase.co", 
+      "YOUR_ANON_KEY"
+    );
+
+    async function login() {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert(error.message);
+      } else {
+        alert("Login successful!");
+        window.location.href = "dashboard.html"; // redirect after login
+      }
+    }
+  </script>
+</body>
+</html>
