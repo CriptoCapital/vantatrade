@@ -1,0 +1,15 @@
+{
+  "name": "vanta-trade",
+  "version": "1.0.0",
+  "description": "VantaTrade — Supabase trading dashboard with TradingView Lightweight Charts",
+  "private": true,
+  "scripts": {
+    "dev": "npx live-server src",
+    "build": "node scripts/generate-env.js && mkdir -p dist && cp -R src/* dist/ || xcopy src dist /E /I /Y",
+    "start": "npx serve dist -p 3000"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "serve": "^14.2.0"
+  }
+}
