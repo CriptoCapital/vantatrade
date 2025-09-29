@@ -15,26 +15,30 @@
     <p>Don’t have an account? <a href="signup.html">Sign up</a></p>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script>
-    const supabase = supabase.createClient(
-      "https://YOUR_PROJECT.supabase.co", 
-      "YOUR_ANON_KEY"
-    );
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ⚡ Replace these with your real values
+  const SUPABASE_URL = "https://kmjgyqqbqcxwpavwgnsu.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttamd5cXFicWN4d3BhdndnbnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTIzNjMsImV4cCI6MjA3NDcyODM2M30.uHWMB_DeQn4nQ-MWcwEKVhnskA_K1AlGoAacmxVu3b0";
 
-    async function login() {
-      const email = document.getElementById("login-email").value;
-      const password = document.getElementById("login-password").value;
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  async function login() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-password").value;
 
-      if (error) {
-        alert(error.message);
-      } else {
-        alert("Login successful!");
-        window.location.href = "dashboard.html"; // redirect after login
-      }
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      alert("Login successful!");
+      window.location.href = "dashboard.html";
     }
-  </script>
+  }
+</script>
 </body>
 </html>
