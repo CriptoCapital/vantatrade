@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VantaTrade — Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/supabase.min.js"></script>
+  <!-- env -->
+  <script src="/env.js"></script>
+</head>
+<body>
+  <header>
+    <h1 id="app-title">VantaTrade</h1>
+  </header>
+
+  <main>
+    <section class="dashboard">
+      <div class="card">
+        <h2>Trading Chart</h2>
+        <div id="tv-chart"></div>
+      </div>
+      <div class="card">
+        <h2>Account</h2>
+        <p id="balance">Balance: Loading...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year"></span> VantaTrade</p>
+  </footer>
+
+  <script src="/supabase-client.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
