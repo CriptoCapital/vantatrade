@@ -3,46 +3,133 @@ const SUPABASE_URL = "https://kmjgyqqbqcxwpavwgnsu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttamd5cXFicWN4d3BhdndnbnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTIzNjMsImV4cCI6MjA3NDcyODM2M30.uHWMB_DeQn4nQ-MWcwEKVhnskA_K1AlGoAacmxVu3b0";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Check auth & load profile
-async function loadUserData() {
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+let currentPrice = 0;
+let userProfile = null;
 
-  if (!user || authError) {
-    // Redirect if not logged in
+// Load user & profile
+async function loadUserData() {
+  const { data: { user }, error } = await supabaseClient.auth.getUser();
+  if (!user) {
     window.location.href = "login.html";
     return;
   }
 
-  // Fetch user profile from "profiles"
-  const { data: profile, error } = await supabaseClient
+  const { data: profile, error: profileError } = await supabaseClient
     .from("profiles")
-    .select("username, currency, balance")
+    .select("id, username, currency, balance")
     .eq("id", user.id)
     .single();
 
-  if (error || !profile) {
-    document.getElementById("username").textContent = "Unknown user";
-    document.getElementById("balance").textContent = "No balance found";
+  if (profileError) {
+    console.error(profileError);
+    return;
+  }
+
+  userProfile = profile;
+  document.getElementById("username").textContent = profile.username;
+  document.getElementById("balance").textContent = 
+    `Balance: ${profile.currency} ${profile.balance}`;
+  document.getElementById("balance-display").textContent =
+    `${profile.currency} ${profile.balance}`;
+
+  loadTrades();
+}
+
+// Place trade
+async function placeTrade(type) {
+  const amount = parseFloat(document.getElementById("trade-amount").value);
+  if (isNaN(amount) || amount <= 0) {
+    alert("Enter valid amount");
+    return;
+  }
+
+  if (userProfile.balance < amount) {
+    alert("Insufficient balance");
+    return;
+  }
+
+  const { error } = await supabaseClient.from("transactions").insert({
+    user_id: userProfile.id,
+    type,
+    amount,
+    entry_price: currentPrice,
+    status: "open",
+    symbol: "BTC/USDT"
+  });
+
+  if (error) {
     console.error(error);
     return;
   }
 
-  // Update UI
-  document.getElementById("username").textContent = profile.username;
-  document.getElementById("balance").textContent = 
-    `Balance: ${profile.currency} ${profile.balance}`;
+  // Deduct balance
+  await supabaseClient
+    .from("profiles")
+    .update({ balance: userProfile.balance - amount })
+    .eq("id", userProfile.id);
+
+  alert(`Trade placed: ${type.toUpperCase()} ${amount} @ ${currentPrice}`);
+  loadUserData();
 }
 
-// Logout
-async function logout() {
-  await supabaseClient.auth.signOut();
-  window.location.href = "login.html";
+// Load trades
+async function loadTrades() {
+  const { data: trades, error } = await supabaseClient
+    .from("transactions")
+    .select("*")
+    .eq("user_id", userProfile.id)
+    .eq("status", "open");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const tbody = document.getElementById("trades-list");
+  tbody.innerHTML = "";
+  trades.forEach(trade => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${trade.type}</td>
+      <td>${trade.amount}</td>
+      <td>${trade.entry_price}</td>
+      <td>${trade.status}</td>
+      <td><button onclick="closeTrade('${trade.id}', ${trade.amount}, ${trade.entry_price})">Close</button></td>
+    `;
+    tbody.appendChild(row);
+  });
 }
 
-// Setup TradingView Lightweight Chart
+// Close trade
+async function closeTrade(tradeId, amount, entryPrice) {
+  const exitPrice = currentPrice;
+  const profitLoss = (exitPrice - entryPrice) * (amount / entryPrice);
+
+  // Update transaction
+  await supabaseClient
+    .from("transactions")
+    .update({
+      status: "closed",
+      exit_price: exitPrice,
+      profit_loss: profitLoss
+    })
+    .eq("id", tradeId);
+
+  // Update balance
+  await supabaseClient
+    .from("profiles")
+    .update({
+      balance: userProfile.balance + amount + profitLoss
+    })
+    .eq("id", userProfile.id);
+
+  alert(`Trade closed. P/L: ${profitLoss.toFixed(2)}`);
+  loadUserData();
+}
+
+// Live Chart with Binance API
 function initChart() {
   const chartEl = document.getElementById("tv-chart");
-
   const chart = LightweightCharts.createChart(chartEl, {
     layout: { background: { color: '#0d1117' }, textColor: '#c9d1d9' },
     grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
@@ -50,28 +137,33 @@ function initChart() {
     height: chartEl.clientHeight,
   });
 
-  const candleSeries = chart.addCandlestickSeries({
-    upColor: '#26a69a',
-    borderUpColor: '#26a69a',
-    wickUpColor: '#26a69a',
-    downColor: '#ef5350',
-    borderDownColor: '#ef5350',
-    wickDownColor: '#ef5350',
-  });
+  const lineSeries = chart.addLineSeries({ color: '#26a69a' });
 
-  // Demo data (replace with live feed later)
-  candleSeries.setData([
-    { time: '2025-09-21', open: 100, high: 110, low: 90, close: 105 },
-    { time: '2025-09-22', open: 106, high: 115, low: 100, close: 108 },
-    { time: '2025-09-23', open: 108, high: 112, low: 101, close: 103 },
-    { time: '2025-09-24', open: 103, high: 109, low: 95, close: 97 },
-    { time: '2025-09-25', open: 97, high: 102, low: 92, close: 100 },
-  ]);
+  async function fetchPrice() {
+    try {
+      const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
+      const data = await res.json();
+      currentPrice = parseFloat(data.price);
 
-  // Responsive chart
+      const now = Math.floor(Date.now() / 1000);
+      lineSeries.update({ time: now, value: currentPrice });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  fetchPrice();
+  setInterval(fetchPrice, 3000);
+
   window.addEventListener('resize', () => {
     chart.applyOptions({ width: chartEl.clientWidth, height: chartEl.clientHeight });
   });
+}
+
+// Logout
+async function logout() {
+  await supabaseClient.auth.signOut();
+  window.location.href = "login.html";
 }
 
 // Run
